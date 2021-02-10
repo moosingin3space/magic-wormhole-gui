@@ -1,4 +1,4 @@
 {:deps
- {nrepl {:mvn/version "0.7.0"}
+ {nrepl/nrepl {:mvn/version "0.7.0"}
   cider/cider-nrepl {:mvn/version "0.25.2"}
-  cljfx {:mvn/version "1.7.13"}}}
+  cljfx/cljfx {:mvn/version "1.7.13"}}}
