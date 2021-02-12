@@ -10,7 +10,11 @@
   (atom {:display :main
          :upload-state {:file nil
                         :is-uploading false
-                        :progress 0}}))
+                        :progress 0}
+         :download-state {:is-downloading false
+                          :progress 0
+                          :file nil}}))
+
 
 (defn- font-from-resource
   "Loads a font from a resource"
@@ -108,7 +112,9 @@
                              :h-box/hgrow :always}
                             {:fx/type :button
                              :text "\uF0EA"
-                             :font font-awesome-small}]}
+                             :font font-awesome-small
+                             :tooltip {:fx/type :tooltip
+                                       :text "Copy"}}]}
                 {:fx/type :label
                  :text "Copy the code above and send it to your friend!"
                  :style {:-fx-font-style :italic}}
@@ -122,25 +128,51 @@
 
 (defn download-pane
   "Draws the Download pane"
-  [& args]
-  {:fx/type :v-box
-   :alignment :center
-   :children [{:fx/type heading-label
-               :text "Enter the code:"}
-              {:fx/type :text-field
-               :prompt-text "i.e. 7-crossover-clockwork"}
-              {:fx/type :h-box
-               :children
-                 [{:fx/type :text-field
-                   :prompt-text "Downloads path"}
-                  {:fx/type :button
-                   :text "Download"}]}
-              {:fx/type :h-box
-               :alignment :center
-               :children [{:fx/type :progress-bar}
-                          {:fx/type :button
-                           :text "Cancel"
-                           :on-action {:event/type ::cancel}}]}]})
+  [props]
+  (let [font-awesome-small
+        (font-from-resource "fontawesome-webfont.ttf" 14.0)
+        progress-component (if (get-in props [:download-state :is-downloading])
+                             {:fx/type :progress-bar}
+                             {:fx/type :label
+                              :text "Please enter a code."})]
+      {:fx/type :v-box
+       :alignment :center
+       :spacing 5
+       :children [{:fx/type heading-label
+                   :text "Enter a code:"}
+                  {:fx/type :h-box
+                   :v-box/margin {:top 0 :bottom 0 :left 10 :right 10}
+                   :children [{:fx/type :text-field
+                               :prompt-text "i.e. 7-crossover-clockwork"
+                               :h-box/hgrow :always}
+                              {:fx/type :button
+                               :text "\uF0EA"
+                               :font font-awesome-small
+                               :tooltip {:fx/type :tooltip
+                                         :text "Paste"}}]}
+                  {:fx/type :h-box
+                   :v-box/margin {:top 0 :bottom 0 :left 10 :right 10}
+                   :children
+                   [{:fx/type :text-field
+                     :prompt-text "Downloads path"
+                     :h-box/hgrow :always}
+                    {:fx/type :button
+                     :text "\uF07C"
+                     :font font-awesome-small
+                     :tooltip {:fx/type :tooltip
+                               :text "Browse"}}
+                    {:fx/type :button
+                     :text "\uF019"
+                     :font font-awesome-small
+                     :tooltip {:fx/type :tooltip
+                               :text "Download"}}]}
+                  {:fx/type :h-box
+                   :alignment :center
+                   :spacing 20
+                   :children [progress-component
+                              {:fx/type :button
+                               :text "Cancel"
+                               :on-action {:event/type ::cancel}}]}]}))
 
 (defn root [{:keys [display upload-state]}]
   (let [pane (cond
