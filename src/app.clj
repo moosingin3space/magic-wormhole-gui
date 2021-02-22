@@ -4,7 +4,7 @@
   (:import [javafx.scene Node])
   (:import [javafx.scene.text Font])
   (:import [javafx.scene.input TransferMode])
-  (:import [javafx.stage FileChooser]))
+  (:import [javafx.stage FileChooser DirectoryChooser]))
 
 (def *state
   (atom {:display :main
@@ -13,8 +13,7 @@
                         :progress 0}
          :download-state {:is-downloading false
                           :progress 0
-                          :file nil}}))
-
+                          :downloads-path (jio/file (System/getProperty "user.home") "Downloads")}}))
 
 (defn- font-from-resource
   "Loads a font from a resource"
@@ -47,6 +46,14 @@
                   (.setTitle "Select a file to upload"))
         file (.showOpenDialog chooser window)]
     file))
+
+(defn- select-dir
+  "Opens a directory dialog for picking the downloads directory"
+  [window]
+  (let [chooser (doto (DirectoryChooser.)
+                  (.setTitle "Select a directory"))
+        dir (.showDialog chooser window)]
+    dir))
 
 (defn main-pane
   "Draws the Main pane"
@@ -155,12 +162,14 @@
                    :children
                    [{:fx/type :text-field
                      :prompt-text "Downloads path"
+                     :text (.getPath (get-in props [:download-state :downloads-path]))
                      :h-box/hgrow :always}
                     {:fx/type :button
                      :text "\uF07C"
                      :font font-awesome-small
                      :tooltip {:fx/type :tooltip
-                               :text "Browse"}}
+                               :text "Browse"}
+                     :on-action {:event/type ::browse-downloads}}
                     {:fx/type :button
                      :text "\uF019"
                      :font font-awesome-small
@@ -174,12 +183,13 @@
                                :text "Cancel"
                                :on-action {:event/type ::cancel}}]}]}))
 
-(defn root [{:keys [display upload-state]}]
+(defn root [{:keys [display upload-state download-state]}]
   (let [pane (cond
                (= display :main) {:fx/type main-pane}
                (= display :upload) {:fx/type upload-pane
                                     :upload-state upload-state}
-               (= display :download) {:fx/type download-pane}
+               (= display :download) {:fx/type download-pane
+                                      :download-state download-state}
                :else {:fx/type :label
                       :text "Unknown display!"})]
     {:fx/type :stage
@@ -213,6 +223,12 @@
   (let [files (.getFiles (.getDragboard (:fx/event e)))
         file-to-upload (first files)]
     (set-upload-with-file! file-to-upload)))
+
+(defmethod event-handler ::browse-downloads [e]
+  (let [window (.getWindow (.getScene ^Node (.getTarget (:fx/event e))))
+        dir (select-dir window)]
+    (if (not (nil? dir))
+      (swap! *state (fn [s] (assoc-in s [:download-state :downloads-path] dir))))))
 
 (def renderer
   (fx/create-renderer
